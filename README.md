@@ -3,7 +3,7 @@
 
 ### install mongodb 
 
-```
+```shell
 # Server (mongod)
 mkdir mongo
 cd mongo
@@ -21,7 +21,7 @@ mongo -u cj -p 123456 --authenticationDatabase admin
 
 ### mongodb client
 
-```
+```shell
 # Client (mongo)
 # admin: authentication database; demo: the dabatase after login; if not set,use default db:test
 docker run -it --rm --link micro-mongo:mongod --name mongo-client mongo:latest mongo -host mongod -u cj -p 123456 --authenticationDatabase admin demo
@@ -29,7 +29,7 @@ docker run -it --rm --link micro-mongo:mongod --name mongo-client mongo:latest m
 
 ### mongodb cmd
 
-```
+```shell
 show dbs
 db
 show collections
@@ -68,11 +68,14 @@ title,author,description,tags,catalogue,postDate,content,meta:createTime,updateT
 check catalogues and articles:
 
 ```vim
-> db.catalogues.aggregate([ {$project:{id:1,name:1}},{ $lookup:{ from:"articles", localField:"_id", foreignField:"catalogueId" ,as:"articles"} },{$project:db.catalogues.aggregate([ {$project:{id:1,name:1}},{ $lookup:{ from:"articles", localField:"_id", foreignField:"catalogueId" ,as:"articles"} },{$project:{"_id":0,"name":1,"articles.title":1,"articles.author":1}} ])
-{ "name" : "Spring", "articles" : [ { "title" : "Spring Basic", "author" : "Tom" }, { "title" : "Spring MVC", "author" : "Tom" }, { "title" : "Spring Security", "author" : "Tom" } ] }
-{ "name" : "ReactJS", "articles" : [ { "title" : "ReactJS Basic", "author" : "Lucy" }, { "title" : "ReactJS Flux", "author" : "Lucy" } ] }
-{ "name" : "NoSql", "articles" : [ { "title" : "Redis", "author" : "Jack" }, { "title" : "MongoDB", "author" : "Jack" } ] }
-{ "name" : "Docker", "articles" : [ ] }
+> db.catalogues.aggregate([ 
+	{$project:{id:1,name:1}},
+	{ $lookup:{ from:"articles", localField:"_id", foreignField:"catalogueId" ,as:"articles"} },
+	{$project:{"_id":0,"name":1,"articles.title":1,"articles.author":1}} 
+])
+{ "name" : "Spring", "articles" : [ { "title" : "Spring Basic" }, { "title" : "Spring MVC" }, { "title" : "Spring Security" } ] }
+{ "name" : "ReactJS", "articles" : [ { "title" : "ReactJS Basic" }, { "title" : "ReactJS Flux" } ] }
+{ "name" : "NoSql", "articles" : [ { "title" : "Redis" }, { "title" : "MongoDB" } ] }
 ```
 
 ### 3. Model: users
@@ -112,21 +115,26 @@ path,method,roles
 ## Start Demo
 
 Start MongoDB Server Container:
-```
+
+```shell
 docker ps
 docker start micro-mongo
 ```
 
 Start HttpServer:
-```
+
+```shell
 cd node-mongo
 npm install
 node app
 ```
 
-Visit:
-```
-curl
+Visit: `http://localhost:3000`
+
+eg:
+
+```shell
+curl -i http://localhost:3000/catalogues
 ```
 
 
@@ -155,14 +163,14 @@ app.listen(3000,()=>{
 
 ### static
 
-```
+```js
 const static = require('koa-static');
 app.use(static(path.resolve(__dirname, "./public")));
 ```
 
 ### body
 
-```
+```js
 const KoaBody = require('koa-body');
 app.use(KoaBody());	
 app.use(async(ctx,next)=>{
@@ -177,7 +185,7 @@ app.use(async(ctx,next)=>{
 `npm install koa-router -s`
 
 
-```
+```js
 const Router=require("koa-router");
 const router=new Router();
 
@@ -192,7 +200,7 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 ```
 
-```
+```js
 // catalogueController.js
 module.exports={
   list:async (ctx,next)=>{
@@ -213,7 +221,7 @@ extend: store session on mongodb
 
 app.js
 
-```
+```js
 const session=require('koa-session2');
 const MongoStore=require('./util/mongoStore');
 
@@ -246,7 +254,7 @@ app.use(async(ctx,next)=>{
 
 mongoStore.js
 
-```
+```js
 const mongoose = require('mongoose');
 const { Store } = require("koa-session2");
 
@@ -295,12 +303,49 @@ class MongoStore extends Store {
 module.exports = MongoStore;
 ```
 
+session stored in mongodb:
+
+```shell
+> db.sessions.find().pretty()
+{
+    "_id" : "53094f8db3e399e17616a4d910676c58b6cde92f3b9435be",
+    "__v" : 0,
+    "data" : {
+        "loginUser" : {
+            "username" : "admin",
+            "roles" : [
+                "admin"
+            ]
+        }
+    },
+    "updatedAt" : ISODate("2018-09-09T09:40:40.277Z")
+}
+```
+
+```shell
+> db.sessions.getIndexes()
+{
+    "_id" : "0fae6e0b924022ab3e7a3b4fe2c70f878c8ad803a064d557",
+    "__v" : 0,
+    "data" : {
+        "loginUser" : {
+            "username" : "Tom",
+            "roles" : [
+                "user"
+            ]
+        }
+    },
+    "updatedAt" : ISODate("2018-09-09T09:41:16.852Z")
+}
+```
+
+
 ## mongoose
 
 `npm install mongoose -s`
 
 
-```
+```js
 const mongoose =require("mongoose");
 mongoose.connect('mongodb://cj:123456@localhost:27017/demo?authSource=admin'
   ,{ useNewUrlParser: true});
@@ -329,7 +374,7 @@ catalogueSchema.pre('save',function(next){
 let catalogueDao=mongoose.model('catalogues',catalogueSchema);
 ```
 
-```
+```js
 // Operate Functions
 
 async function list(){
@@ -362,7 +407,7 @@ async function deleteCatalogue(id){
 }
 ```
 
-```
+```js
 // test
 async function test(){
   console.log("start test");
