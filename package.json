@@ -1,0 +1,25 @@
+{
+  "name": "node-mongo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jin",
+  "license": "ISC",
+  "dependencies": {
+    "koa": "^2.5.2",
+    "koa-body": "^4.0.4",
+    "koa-router": "^7.4.0",
+    "koa-session2": "^2.2.8",
+    "koa-static": "^5.0.0",
+    "mongoose": "^5.2.12",
+    "url-pattern": "^1.0.3"
+  },
+  "devDependencies": {
+    "koa-session": "^5.9.0",
+    "koa-session-mongoose": "^2.0.5",
+    "path-parser": "^4.2.0"
+  }
+}
