@@ -64,7 +64,7 @@ const mongoStore = new MongoStore({
 app.keys=['a secret key'];	// if set signed:true,need setting the .keys.
 app.use(session({
 	key:"SESSIONID",
-	//signed:true,		// SESSIONID.sig,need to set .keys,作用：给cookie加上一个sha256的签名,防止cookie被篡改
+	signed:true,		// SESSIONID.sig,need to set .keys,作用：给cookie加上一个sha256的签名,防止cookie被篡改
 	maxAge:86400000,	// cookie expire after maxAge ms: 1 day = 24h*60m*60s*1000=86400,000ms
 	store: mongoStore
 }));
@@ -109,7 +109,7 @@ const privilegeFilter=async (ctx,next)=>{
     if(matched)
       await next();
     else
-      ctx.throw(403);
+      ctx.throw(401);
 }
 app.use(privilegeFilter);
 

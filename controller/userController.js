@@ -3,6 +3,10 @@ let userDao=require('../module/user');
 
 module.exports={
   register:async (ctx,next)=>{
+
+    if(ctx.session && ctx.session.loginUser)
+      ctx.throw("logout first!");
+
     let user=ctx.request.body;
     let result=await userDao.create({username:user.username,password:user.password,roles:["user"]});
     console.log(result);
@@ -16,6 +20,10 @@ module.exports={
     let user=ctx.request.body;
     console.log("login request body:");
     console.log(user);
+    
+    if(ctx.session && ctx.session.loginUser && ctx.session.loginUser.username==user.username)
+      ctx.throw("already logined");
+
     let result=await userDao.findOne({username:user.username,password:user.password});
     console.log(result);
     if(result && result.username){

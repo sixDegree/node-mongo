@@ -3,7 +3,7 @@
 
 ### install mongodb 
 
-```shell
+```sh
 # Server (mongod)
 mkdir mongo
 cd mongo
@@ -21,7 +21,7 @@ mongo -u cj -p 123456 --authenticationDatabase admin
 
 ### mongodb client
 
-```shell
+```sh
 # Client (mongo)
 # admin: authentication database; demo: the dabatase after login; if not set,use default db:test
 docker run -it --rm --link micro-mongo:mongod --name mongo-client mongo:latest mongo -host mongod -u cj -p 123456 --authenticationDatabase admin demo
@@ -29,7 +29,7 @@ docker run -it --rm --link micro-mongo:mongod --name mongo-client mongo:latest m
 
 ### mongodb cmd
 
-```shell
+```sh
 show dbs
 db
 show collections
@@ -116,14 +116,14 @@ path,method,roles
 
 Start MongoDB Server Container:
 
-```shell
+```sh
 docker ps
 docker start micro-mongo
 ```
 
 Start HttpServer:
 
-```shell
+```sh
 cd node-mongo
 npm install
 node app
@@ -133,10 +133,194 @@ Visit: `http://localhost:3000`
 
 eg:
 
-```shell
-curl -i http://localhost:3000/catalogues
+1. list catalogues - `GET /catalogues`
+
+```sh
+> curl -i http://localhost:3000/catalogues
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 287
+Date: Tue, 11 Sep 2018 15:33:52 GMT
+Connection: keep-alive
+
+{"success":1,"data":[{"_id":"5b8e87236d51124b97751d32","name":"Spring","description":"spring framework"},{"_id":"5b8e87236d51124b97751d33","name":"ReactJS","description":"reactJS front framework"},{"_id":"5b8e87236d51124b97751d34","name":"NoSql","description":"not only sql databases"}]}
 ```
 
+2. get catalogue details by id - `GET /catalogues/:id`
+
+```sh
+> curl -i http://localhost:3000/catalogues/5b8e87236d51124b97751d32
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 209
+Date: Tue, 11 Sep 2018 15:35:01 GMT
+Connection: keep-alive
+
+{"success":1,"data":{"meta":{"createTime":"2018-09-04T13:22:43.204Z","updateTime":"2018-09-04T13:22:43.204Z","updator":"Tom"},"_id":"5b8e87236d51124b97751d32","name":"Spring","description":"spring framework"}
+```
+
+3. create catalogue - `POST /catalogue` (need login & has admin role)
+
+```sh
+> curl -i -H "Content-Type:application/json" -X POST --data '{"name":"Docker","description":"Build, Ship, and Run Any App, Anywhere"}' http://localhost:3000/catalogues
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 48
+Date: Tue, 11 Sep 2018 15:43:32 GMT
+Connection: keep-alive
+
+{"success":0,"status":401,"message":"Unauthorized"}
+
+# after login
+> curl -i -b cookie.txt -H "Content-Type:application/json" -X POST --data '{"name":"Docker","description":"Build, Ship, and Run Any App, Anywhere"}' http://localhost:3000/catalogues
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 215
+Date: Tue, 11 Sep 2018 16:37:43 GMT
+Connection: keep-alive
+
+{"success":1,"data":{"meta":{"createTime":"2018-09-11T16:37:42.991Z","updateTime":"2018-09-11T16:37:42.991Z"},"_id":"5b97ef56f0a7fe0ab7f422f8","name":"Docker","description":"Build, Ship, and Run Any App, Anywhere"}}
+
+```
+
+4. update catalogue by id - `PUT /catalogues/:id` (need login & has admin role)
+
+```sh
+# after login
+> curl -i -b cookie.txt -H "Content-Type:application/json" -X PUT --data '{"name":"Docker Feature","description":"Container:Build, Ship, and Run Any App, Anywhere"}' http://localhost:3000/catalogues/5b97ef56f0a7fe0ab7f422f8
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 28
+Date: Tue, 11 Sep 2018 16:39:56 GMT
+Connection: keep-alive
+
+{"n":1,"nModified":1,"ok":1}
+
+```
+
+5. delete catalogue by id - `DELETE /catalogues/:id` (need login & has admin role)
+
+```sh
+# after login
+> curl -i -b cookie.txt -X DELETE http://localhost:3000/catalogues/5b97ef56f0a7fe0ab7f422f8
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 13
+Date: Tue, 11 Sep 2018 16:41:08 GMT
+Connection: keep-alive
+
+{"success":1}
+```
+
+6. user register - `POST /register` (gust access,register user will be assigned role:user)
+
+```sh
+> curl -i -d "username=lucy&password=123" http://localhost:3000/register
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 40
+Date: Tue, 11 Sep 2018 16:52:17 GMT
+Connection: keep-alive
+
+{"success":1,"data":{"username":"lucy"}}
+
+# logined user,register fail
+> curl -i -d "username=lucy&password=123" http://localhost:3000/register
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 40
+Date: Tue, 11 Sep 2018 16:52:17 GMT
+Connection: keep-alive
+
+{"success": 0,"status": 500,"message": "logout first!"}
+
+```
+
+6. user login - `POST /login`
+
+```sh
+# curl -i -H "Content-Type:application/json" -X POST --data '{"username":"admin","password":"123"}' http://localhost:3000/login
+# curl -i -d "username=admin&password=123" http://localhost:3000/login
+> curl -i -c cookie.txt -d "username=admin&password=123" http://localhost:3000/login
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Set-Cookie: SESSIONID=8cbe57db55bb6c944df99ec9a10481a431c41e5ba1400a4a; path=/; expires=Wed, 12 Sep 2018 16:29:57 GMT; httponly
+Set-Cookie: SESSIONID.sig=TsESPv34Ny1rOA9jimTrlybpHDE; path=/; expires=Wed, 12 Sep 2018 16:29:57 GMT; httponly
+Content-Length: 59
+Date: Tue, 11 Sep 2018 16:29:57 GMT
+Connection: keep-alive
+
+{"success":1,"data":{"username":"admin","roles":["admin"]}}
+
+# re-login
+> curl -c cookie.txt -d "username=admin&password=123" http://localhost:3000/login
+
+{"success": 0,"status": 500,"message": "already logined!"}
+
+> cat cookie.txt
+# Netscape HTTP Cookie File
+# http://curl.haxx.se/docs/http-cookies.html
+# This file was generated by libcurl! Edit at your own risk.
+
+#HttpOnly_localhost FALSE / FALSE 1536769797  SESSIONID 8cbe57db55bb6c944df99ec9a10481a431c41e5ba1400a4a
+#HttpOnly_localhost FALSE / FALSE 1536769797  SESSIONID.sig TsESPv34Ny1rOA9jimTrlybpHDE
+```
+
+mongodb stored session:
+
+```sh
+> db.sessions.find().pretty()
+{
+  "_id" : "8cbe57db55bb6c944df99ec9a10481a431c41e5ba1400a4a",
+  "__v" : 0,
+  "data" : {
+    "loginUser" : {
+      "username" : "admin",
+      "roles" : [
+        "admin"
+      ]
+    }
+  },
+  "updatedAt" : ISODate("2018-09-11T16:29:57.025Z")
+}
+```
+
+7. user logout - `POST /logout`
+
+```sh
+> curl -i -X POST http://localhost/logout
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 13
+Date: Tue, 11 Sep 2018 16:00:16 GMT
+Connection: keep-alive
+
+{"success":0}
+
+> cat cookie.txt
+
+> curl -i -b cookie.txt -X POST http://localhost:3000/logout
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Set-Cookie: SESSIONID=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; httponly
+Content-Length: 13
+Date: Tue, 11 Sep 2018 16:00:55 GMT
+Connection: keep-alive
+
+{"success":1}
+
+```
 
 ## Koa
 
@@ -305,7 +489,7 @@ module.exports = MongoStore;
 
 session stored in mongodb:
 
-```shell
+```sh
 > db.sessions.find().pretty()
 {
     "_id" : "53094f8db3e399e17616a4d910676c58b6cde92f3b9435be",
@@ -322,21 +506,28 @@ session stored in mongodb:
 }
 ```
 
-```shell
+```sh
 > db.sessions.getIndexes()
-{
-    "_id" : "0fae6e0b924022ab3e7a3b4fe2c70f878c8ad803a064d557",
-    "__v" : 0,
-    "data" : {
-        "loginUser" : {
-            "username" : "Tom",
-            "roles" : [
-                "user"
-            ]
-        }
+[
+  {
+    "v" : 2,
+    "key" : {
+      "_id" : 1
     },
-    "updatedAt" : ISODate("2018-09-09T09:41:16.852Z")
-}
+    "name" : "_id_",
+    "ns" : "demo.sessions"
+  },
+  {
+    "v" : 2,
+    "key" : {
+      "updatedAt" : 1
+    },
+    "name" : "updatedAt_1",
+    "ns" : "demo.sessions",
+    "expireAfterSeconds" : 30,
+    "background" : true
+  }
+]
 ```
 
 
