@@ -71,7 +71,7 @@ check catalogues and articles:
 > db.catalogues.aggregate([ 
 	{$project:{id:1,name:1}},
 	{ $lookup:{ from:"articles", localField:"_id", foreignField:"catalogueId" ,as:"articles"} },
-	{$project:{"_id":0,"name":1,"articles.title":1,"articles.author":1}} 
+	{$project:{"_id":0,"name":1,"articles.title":1}} 
 ])
 { "name" : "Spring", "articles" : [ { "title" : "Spring Basic" }, { "title" : "Spring MVC" }, { "title" : "Spring Security" } ] }
 { "name" : "ReactJS", "articles" : [ { "title" : "ReactJS Basic" }, { "title" : "ReactJS Flux" } ] }
